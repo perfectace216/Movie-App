@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import useFetch from '../hooks/useFetch';
 import useFetchDetails from '../hooks/useFetchDetails';
 import { useSelector } from 'react-redux';
 import moment from 'moment';
 import Divider from '../components/Divider';
-import useFetch from '../hooks/useFetch';
-import HorizontalScrollCard from '../components/HorizontalScrollCard';
+import HorizontalScollCard from '../components/HorizontalScrollCard';
+import VideoPlay from '../components/VideoPlay';
 
-const DetailPage = () => {
+const DetailsPage = () => {
 	const params = useParams();
 	const imageURL = useSelector((state) => state.movieoData.imageURL);
 	const { data } = useFetchDetails(`/${params?.explore}/${params?.id}`);
@@ -20,15 +21,23 @@ const DetailPage = () => {
 	const { data: recommendationData } = useFetch(
 		`/${params?.explore}/${params?.id}/recommendations`
 	);
+	const [playVideo, setPlayVideo] = useState(false);
+	const [playVideoId, setPlayVideoId] = useState('');
+
 	console.log('data', data);
 	console.log('star cast', castData);
 
+	const handlePlayVideo = (data) => {
+		setPlayVideoId(data);
+		setPlayVideo(true);
+	};
+
 	const duration = (data?.runtime / 60)?.toFixed(1)?.split('.');
 	const writer = castData?.crew
-		?.filter((el) => el?.job === 'Characters')
+		?.filter((el) => el?.job === 'Writer')
 		?.map((el) => el?.name)
-		?.join(',  ');
-	console.log(writer);
+		?.join(', ');
+
 	return (
 		<div>
 			<div className="w-full h-[280px] relative hidden lg:block">
@@ -47,6 +56,11 @@ const DetailPage = () => {
 						src={imageURL + data?.poster_path}
 						className="h-80 w-60 object-cover rounded"
 					/>
+					<button
+						onClick={() => handlePlayVideo(data)}
+						className="mt-3 w-full py-2 px-4 text-center bg-white text-black rounded font-bold text-lg hover:bg-gradient-to-l from-red-500 to-orange-500 hover:scale-105 transition-all">
+						Play Now
+					</button>
 				</div>
 
 				<div>
@@ -66,10 +80,13 @@ const DetailPage = () => {
 							Duration : {duration[0]}h {duration[1]}m
 						</p>
 					</div>
+
 					<Divider />
+
 					<div>
 						<h3 className="text-xl font-bold text-white mb-1">Overview</h3>
 						<p>{data?.overview}</p>
+
 						<Divider />
 						<div className="flex items-center gap-3 my-3 text-center">
 							<p>Staus : {data?.status}</p>
@@ -81,36 +98,40 @@ const DetailPage = () => {
 							<span>|</span>
 							<p>Revenue : {Number(data?.revenue)}</p>
 						</div>
+
 						<Divider />
 					</div>
+
 					<div>
 						<p>
-							{' '}
-							<span className="text-white"> Director</span>:
+							<span className="text-white">Director</span> :{' '}
 							{castData?.crew[0]?.name}
 						</p>
-						<Divider />
-						<p>
-							<span className="text-white">Writer: {writer}</span>
-						</p>
+
+						{/* <Divider /> */}
+
+						{/* <p>
+							<span className="text-white">Writer : {writer}</span>
+						</p> */}
 					</div>
+
 					<Divider />
-					<h2 className="font-bold text-lg">Cast:</h2>
+
+					<h2 className="font-bold text-lg">Cast :</h2>
 					<div className="grid grid-cols-[repeat(auto-fit,96px)] gap-5 my-4">
 						{castData?.cast
 							?.filter((el) => el?.profile_path)
-							.map((cast, index) => {
+							.map((starCast, index) => {
 								return (
 									<div key={index}>
 										<div>
 											<img
-												className="w-24 h-24 rounded-full object-cover"
-												src={imageURL + cast?.profile_path}
-												alt=""
+												src={imageURL + starCast?.profile_path}
+												className="w-24 h-24 object-cover rounded-full"
 											/>
 										</div>
 										<p className="font-bold text-center text-sm text-neutral-400">
-											{cast?.name}
+											{starCast?.name}
 										</p>
 									</div>
 								);
@@ -118,22 +139,29 @@ const DetailPage = () => {
 					</div>
 				</div>
 			</div>
+
 			<div>
-				<HorizontalScrollCard
+				<HorizontalScollCard
 					data={similarData}
 					heading={'Similar ' + params?.explore}
 					media_type={params?.explore}
 				/>
-			</div>
-			<div>
-				<HorizontalScrollCard
+				<HorizontalScollCard
 					data={recommendationData}
 					heading={'Recommendation ' + params?.explore}
 					media_type={params?.explore}
 				/>
 			</div>
+
+			{playVideo && (
+				<VideoPlay
+					data={playVideoId}
+					close={() => setPlayVideo(false)}
+					media_type={params?.explore}
+				/>
+			)}
 		</div>
 	);
 };
 
-export default DetailPage;
+export default DetailsPage;
